@@ -65,50 +65,6 @@ mail_expired=30
 ```
 
 
-# 使用Docker部署
-如果是Docker用户，可参考项目内置的Dockerfile文件编译镜像。
-
-在启动镜像时需要提供如下的环境变量：
-
-```ini
-DB_ADAPTER                  制定 DB
-MYSQL_PORT_3306_TCP_ADDR    MySQL地址
-MYSQL_PORT_3306_TCP_PORT    MySQL端口号
-MYSQL_INSTANCE_NAME         MySQL数据库名称
-MYSQL_USERNAME              MySQL账号
-MYSQL_PASSWORD              MySQL密码
-HTTP_PORT                   程序监听的端口号
-```
-
-举个栗子
-
-```bash
-docker run -p 8181:8181 --name mindoc -e DB_ADAPTER=mysql -e MYSQL_PORT_3306_TCP_ADDR=10.xxx.xxx.xxx -e MYSQL_PORT_3306_TCP_PORT=3306 -e MYSQL_INSTANCE_NAME=mindoc -e MYSQL_USERNAME=root -e MYSQL_PASSWORD=123456 -e httpport=8181 -d daocloud.io/lifei6671/mindoc:latest
-```
-### docker-compose 一键安装
-
-1. 修改配置文件
-    修改`docker-compose.yml`中的配置信息，主要修改`volumes`节点，将宿主机的两个目录映射到容器内。
-    `environment`节点，配置自己的环境变量。
-    
-2. 一键完成所有环境搭建
-    > docker-compose up -d
-3. 浏览器访问
-    > http://localhost:8181/
-
-    整个部署完成了
-4. 常用命令参考
-   - 启动
-        > docker-compose up -d
-   - 停止
-        > docker-compose stop
-   - 重启
-        > docker-compose restart
-   - 停止删除容器，释放所有资源
-        > docker-compose down
-   - 删除并重新创建
-        > docker-compose -f docker-compose.yml down && docker-compose up -d
-   更多 docker-compose 的使用相关的内容 请查看官网文档或百度
    
 # 项目截图
 
