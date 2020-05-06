@@ -492,7 +492,7 @@ func (this *Converter) generateContentOpf() (err error) {
 func (this *Converter) convertToEpub() (err error) {
 	args := []string{
 		filepath.Join(this.OutputPath, "content.epub"),
-		filepath.Join(this.OutputPath, output, "book.epub"),
+		filepath.Join(this.OutputPath,  "book.epub"),
 	}
 	//cmd := exec.Command(ebookConvert, args...)
 	//
@@ -509,7 +509,7 @@ func (this *Converter) convertToEpub() (err error) {
 func (this *Converter) convertToMobi() (err error) {
 	args := []string{
 		filepath.Join(this.OutputPath, "content.epub"),
-		filepath.Join(this.OutputPath, output, "book.mobi"),
+		filepath.Join(this.OutputPath, "book.mobi"),
 	}
 	cmd := exec.Command(ebookConvert, args...)
 	if this.Debug {
@@ -523,7 +523,7 @@ func (this *Converter) convertToMobi() (err error) {
 func (this *Converter) convertToPdf() (err error) {
 	args := []string{
 		filepath.Join(this.OutputPath, "content.epub"),
-		filepath.Join(this.OutputPath, output, "book.pdf"),
+		filepath.Join(this.OutputPath,  "book.pdf"),
 	}
 	//页面大小
 	if len(this.Config.PaperSize) > 0 {
@@ -574,7 +574,7 @@ func (this *Converter) convertToPdf() (err error) {
 func (this *Converter) convertToDocx() (err error) {
 	args := []string{
 		filepath.Join(this.OutputPath , "content.epub"),
-		filepath.Join(this.OutputPath , output , "book.docx"),
+		filepath.Join(this.OutputPath ,  "book.docx"),
 	}
 	args = append(args, "--docx-no-toc")
 
@@ -603,25 +603,6 @@ func (this *Converter) convertToDocx() (err error) {
 	fmt.Println("正在转换 DOCX 文件", args[0])
 	return cmd.Run()
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

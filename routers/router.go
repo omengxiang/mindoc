@@ -121,12 +121,7 @@ func init() {
 	beego.Router("/api/:key/create", &controllers.DocumentController{}, "post:Create")
 	beego.Router("/api/:key/delete", &controllers.DocumentController{}, "post:Delete")
 	beego.Router("/api/:key/content/?:id", &controllers.DocumentController{}, "*:Content")
-	beego.Router("/api/:key/compare/:id", &controllers.DocumentController{}, "*:Compare")
 	beego.Router("/api/search/user/:key", &controllers.SearchController{}, "*:User")
-
-	beego.Router("/history/get", &controllers.DocumentController{}, "get:History")
-	beego.Router("/history/delete", &controllers.DocumentController{}, "*:DeleteHistory")
-	beego.Router("/history/restore", &controllers.DocumentController{}, "*:RestoreHistory")
 
 	beego.Router("/docs/:key", &controllers.DocumentController{}, "*:Index")
 	beego.Router("/docs/:key/:id", &controllers.DocumentController{}, "*:Read")

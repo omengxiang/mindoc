@@ -461,9 +461,6 @@ func (c *BlogController) Upload() {
 
 	ext := filepath.Ext(moreFile.Filename)
 
-	if ext == "" {
-		c.JsonResult(6003, "无法解析文件的格式")
-	}
 	//如果文件类型设置为 * 标识不限制文件类型
 	if beego.AppConfig.DefaultString("upload_file_ext", "") != "*" {
 		if !conf.IsAllowUploadFileExt(ext) {

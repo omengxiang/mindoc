@@ -14,7 +14,6 @@ import (
 	"github.com/lifei6671/mindoc/utils/cryptil"
 	"github.com/lifei6671/mindoc/utils/filetil"
 	"github.com/lifei6671/mindoc/utils/gopool"
-	"github.com/lifei6671/mindoc/utils/pagination"
 	"gopkg.in/russross/blackfriday.v2"
 	"html/template"
 	"image/png"
@@ -370,10 +369,7 @@ func (c *DocumentController) Upload() {
 	}
 
 	ext := filepath.Ext(moreFile.Filename)
-	//文件必须带有后缀名
-	if ext == "" {
-		c.JsonResult(6003, "无法解析文件的格式")
-	}
+
 	//如果文件类型设置为 * 标识不限制文件类型
 	if conf.IsAllowUploadFileExt(ext) == false {
 		c.JsonResult(6004, "不允许的文件类型")
@@ -725,17 +721,6 @@ func (c *DocumentController) Content() {
 			c.JsonResult(6005, "文档已被修改确定要覆盖吗？")
 		}
 
-		history := models.NewDocumentHistory()
-		history.DocumentId = docId
-		history.Content = doc.Content
-		history.Markdown = doc.Markdown
-		history.DocumentName = doc.DocumentName
-		history.ModifyAt = c.Member.MemberId
-		history.MemberId = doc.MemberId
-		history.ParentId = doc.ParentId
-		history.Version = time.Now().Unix()
-		history.Action = "modify"
-		history.ActionName = "修改文档"
 
 		if markdown == "" && content != "" {
 			doc.Markdown = content
@@ -751,17 +736,6 @@ func (c *DocumentController) Content() {
 			beego.Error("InsertOrUpdate => ", err)
 			c.JsonResult(6006, "保存失败")
 		}
-
-		// 如果启用了文档历史，则添加历史文档
-		///如果两次保存的MD5值不同则保存为历史，否则忽略
-		go func(history *models.DocumentHistory) {
-			if c.EnableDocumentHistory && cryptil.Md5Crypt(history.Markdown) != cryptil.Md5Crypt(doc.Markdown) {
-				_, err = history.InsertOrUpdate()
-				if err != nil {
-					beego.Error("DocumentHistory InsertOrUpdate => ", err)
-				}
-			}
-		}(history)
 
 		//如果启用了自动发布
 		if autoRelease {
@@ -959,255 +933,7 @@ func (c *DocumentController) Search() {
 	c.JsonResult(0, "ok", docs)
 }
 
-// 文档历史列表
-func (c *DocumentController) History() {
-	c.Prepare()
 
-	c.TplName = "document/history.tpl"
-
-	identify := c.GetString("identify")
-	docId, err := c.GetInt("doc_id", 0)
-	pageIndex, _ := c.GetInt("page", 1)
-
-	bookId := 0
-
-	// 如果是超级管理员则忽略权限判断
-	if c.Member.IsAdministrator() {
-		book, err := models.NewBook().FindByFieldFirst("identify", identify)
-		if err != nil {
-			beego.Error("查找项目失败 ->", err)
-			c.Data["ErrorMessage"] = "项目不存在或权限不足"
-			return
-		}
-
-		bookId = book.BookId
-		c.Data["Model"] = book
-	} else {
-		bookResult, err := models.NewBookResult().FindByIdentify(identify, c.Member.MemberId)
-		if err != nil || bookResult.RoleId == conf.BookObserver {
-			beego.Error("查找项目失败 ->", err)
-			c.Data["ErrorMessage"] = "项目不存在或权限不足"
-			return
-		}
-
-		bookId = bookResult.BookId
-		c.Data["Model"] = bookResult
-	}
-
-	if docId <= 0 {
-		c.Data["ErrorMessage"] = "参数错误"
-		return
-	}
-
-	doc, err := models.NewDocument().Find(docId)
-	if err != nil {
-		beego.Error("Delete => ", err)
-		c.Data["ErrorMessage"] = "获取历史失败"
-		return
-	}
-
-	// 如果文档所属项目错误
-	if doc.BookId != bookId {
-		c.Data["ErrorMessage"] = "参数错误"
-		return
-	}
-
-	histories, totalCount, err := models.NewDocumentHistory().FindToPager(docId, pageIndex, conf.PageSize)
-	if err != nil {
-		beego.Error("分页查找文档历史失败 ->", err)
-		c.Data["ErrorMessage"] = "获取历史失败"
-		return
-	}
-
-	c.Data["List"] = histories
-	c.Data["PageHtml"] = ""
-	c.Data["Document"] = doc
-
-	if totalCount > 0 {
-		pager := pagination.NewPagination(c.Ctx.Request, totalCount, conf.PageSize, c.BaseUrl())
-		c.Data["PageHtml"] = pager.HtmlPages()
-	}
-}
-
-func (c *DocumentController) DeleteHistory() {
-	c.Prepare()
-
-	c.TplName = "document/history.tpl"
-
-	identify := c.GetString("identify")
-	docId, err := c.GetInt("doc_id", 0)
-	historyId, _ := c.GetInt("history_id", 0)
-
-	if historyId <= 0 {
-		c.JsonResult(6001, "参数错误")
-	}
-
-	bookId := 0
-
-	// 如果是超级管理员则忽略权限判断
-	if c.Member.IsAdministrator() {
-		book, err := models.NewBook().FindByFieldFirst("identify", identify)
-		if err != nil {
-			beego.Error("查找项目失败 ->", err)
-			c.JsonResult(6002, "项目不存在或权限不足")
-		}
-
-		bookId = book.BookId
-	} else {
-		bookResult, err := models.NewBookResult().FindByIdentify(identify, c.Member.MemberId)
-		if err != nil || bookResult.RoleId == conf.BookObserver {
-			beego.Error("查找项目失败 ->", err)
-			c.JsonResult(6002, "项目不存在或权限不足")
-		}
-
-		bookId = bookResult.BookId
-	}
-
-	if docId <= 0 {
-		c.JsonResult(6001, "参数错误")
-	}
-
-	doc, err := models.NewDocument().Find(docId)
-	if err != nil {
-		beego.Error("Delete => ", err)
-		c.JsonResult(6001, "获取历史失败")
-	}
-
-	// 如果文档所属项目错误
-	if doc.BookId != bookId {
-		c.JsonResult(6001, "参数错误")
-	}
-
-	err = models.NewDocumentHistory().Delete(historyId, docId)
-	if err != nil {
-		beego.Error(err)
-		c.JsonResult(6002, "删除失败")
-	}
-
-	c.JsonResult(0, "ok")
-}
-
-//通过文档历史恢复文档
-func (c *DocumentController) RestoreHistory() {
-	c.Prepare()
-
-	c.TplName = "document/history.tpl"
-
-	identify := c.GetString("identify")
-	docId, err := c.GetInt("doc_id", 0)
-	historyId, _ := c.GetInt("history_id", 0)
-
-	if historyId <= 0 {
-		c.JsonResult(6001, "参数错误")
-	}
-
-	bookId := 0
-	// 如果是超级管理员则忽略权限判断
-	if c.Member.IsAdministrator() {
-		book, err := models.NewBook().FindByFieldFirst("identify", identify)
-		if err != nil {
-			beego.Error("FindByIdentify => ", err)
-			c.JsonResult(6002, "项目不存在或权限不足")
-		}
-
-		bookId = book.BookId
-	} else {
-		bookResult, err := models.NewBookResult().FindByIdentify(identify, c.Member.MemberId)
-		if err != nil || bookResult.RoleId == conf.BookObserver {
-			beego.Error("FindByIdentify => ", err)
-			c.JsonResult(6002, "项目不存在或权限不足")
-		}
-
-		bookId = bookResult.BookId
-	}
-
-	if docId <= 0 {
-		c.JsonResult(6001, "参数错误")
-	}
-
-	doc, err := models.NewDocument().Find(docId)
-	if err != nil {
-		beego.Error("Delete => ", err)
-		c.JsonResult(6001, "获取历史失败")
-	}
-
-	// 如果文档所属项目错误
-	if doc.BookId != bookId {
-		c.JsonResult(6001, "参数错误")
-	}
-
-	err = models.NewDocumentHistory().Restore(historyId, docId, c.Member.MemberId)
-	if err != nil {
-		beego.Error(err)
-		c.JsonResult(6002, "删除失败")
-	}
-
-	c.JsonResult(0, "ok", doc)
-}
-
-func (c *DocumentController) Compare() {
-	c.Prepare()
-
-	c.TplName = "document/compare.tpl"
-
-	historyId, _ := strconv.Atoi(c.Ctx.Input.Param(":id"))
-	identify := c.Ctx.Input.Param(":key")
-
-	bookId := 0
-	editor := "markdown"
-
-	// 如果是超级管理员则忽略权限判断
-	if c.Member.IsAdministrator() {
-		book, err := models.NewBook().FindByFieldFirst("identify", identify)
-		if err != nil {
-			beego.Error("DocumentController.Compare => ", err)
-			c.ShowErrorPage(403, "权限不足")
-			return
-		}
-
-		bookId = book.BookId
-		c.Data["Model"] = book
-		editor = book.Editor
-	} else {
-		bookResult, err := models.NewBookResult().FindByIdentify(identify, c.Member.MemberId)
-		if err != nil || bookResult.RoleId == conf.BookObserver {
-			beego.Error("FindByIdentify => ", err)
-			c.ShowErrorPage(403, "权限不足")
-			return
-		}
-
-		bookId = bookResult.BookId
-		c.Data["Model"] = bookResult
-		editor = bookResult.Editor
-	}
-
-	if historyId <= 0 {
-		c.ShowErrorPage(60002, "参数错误")
-	}
-
-	history, err := models.NewDocumentHistory().Find(historyId)
-	if err != nil {
-		beego.Error("DocumentController.Compare => ", err)
-		c.ShowErrorPage(60003, err.Error())
-	}
-
-	doc, err := models.NewDocument().Find(history.DocumentId)
-	if err != nil || doc == nil || doc.BookId != bookId {
-		c.ShowErrorPage(60002, "文档不存在或已删除")
-		return
-	}
-
-	c.Data["HistoryId"] = historyId
-	c.Data["DocumentId"] = doc.DocumentId
-
-	if editor == "markdown" {
-		c.Data["HistoryContent"] = history.Markdown
-		c.Data["Content"] = doc.Markdown
-	} else {
-		c.Data["HistoryContent"] = template.HTML(history.Content)
-		c.Data["Content"] = template.HTML(doc.Content)
-	}
-}
 
 // 判断用户是否可以阅读文档
 func (c *DocumentController) isReadable(identify, token string) *models.BookResult {

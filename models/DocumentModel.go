@@ -135,7 +135,6 @@ func (item *Document) RecursiveDocument(docId int) error {
 
 	if doc, err := item.Find(docId); err == nil {
 		o.Delete(doc)
-		NewDocumentHistory().Clear(doc.DocumentId)
 	}
 	var maps []orm.Params
 

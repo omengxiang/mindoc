@@ -115,10 +115,6 @@ func (m *MigrationVersion03) RollbackMigration() error {
 		return err
 	}
 
-	_, err = o.Raw("DROP TABLE md_document_history").Exec()
-	if err != nil {
-		return err
-	}
 	_, err = o.Raw("DELETE md_options WHERE option_name = 'ENABLE_DOCUMENT_HISTORY'").Exec()
 
 	if err != nil {

@@ -97,7 +97,6 @@ func RegisterModel() {
 		new(models.Attachment),
 		new(models.Logger),
 		new(models.MemberToken),
-		new(models.DocumentHistory),
 		new(models.Migration),
 		new(models.Label),
 		new(models.Blog),

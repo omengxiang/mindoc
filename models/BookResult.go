@@ -332,7 +332,7 @@ func (m *BookResult) Converter(sessionId string) (ConvertBookResult, error) {
 		Cover:        m.Cover,
 		Timestamp:    time.Now().Format("2006-01-02 15:04:05"),
 		Description:  string(blackfriday.Run([]byte(m.Description))),
-		Footer:       "<p style='color:#8E8E8E;font-size:12px;'>本文档使用 <a href='https://www.iminho.me' style='text-decoration:none;color:#1abc9c;font-weight:bold;'>MinDoc</a> 构建 <span style='float:right'>- _PAGENUM_ -</span></p>",
+		Footer:       "<p style='color:#8E8E8E;font-size:12px;'>本文档使用 <a href='https://www.uxuewen.com' style='text-decoration:none;color:#1abc9c;font-weight:bold;'>MinDoc</a> 构建 <span style='float:right'>- _PAGENUM_ -</span></p>",
 		Header:       "<p style='color:#8E8E8E;font-size:12px;'>_SECTION_</p>",
 		Identifier:   "",
 		Language:     "zh-CN",
@@ -340,7 +340,7 @@ func (m *BookResult) Converter(sessionId string) (ConvertBookResult, error) {
 		Publisher:    m.Publisher,
 		Contributor:  m.Publisher,
 		Title:        m.BookName,
-		Format:       []string{"epub", "mobi", "pdf", "docx"},
+		Format:       []string{"epub", "mobi", "docx"},
 		FontSize:     "14",
 		PaperSize:    "a4",
 		MarginLeft:   "72",
@@ -483,19 +483,6 @@ func (m *BookResult) Converter(sessionId string) (ConvertBookResult, error) {
 		return convertBookResult, err
 	}
 	beego.Info("文档转换完成：" + m.BookName)
-
-	if err := filetil.CopyFile(filepath.Join(eBookConverter.OutputPath, "output", "book.mobi"), mobipath, ); err != nil {
-		beego.Error("复制文档失败 -> ", filepath.Join(eBookConverter.OutputPath, "output", "book.mobi"), err)
-	}
-	if err := filetil.CopyFile(filepath.Join(eBookConverter.OutputPath, "output", "book.pdf"), pdfpath); err != nil {
-		beego.Error("复制文档失败 -> ", filepath.Join(eBookConverter.OutputPath, "output", "book.pdf"), err)
-	}
-	if err := filetil.CopyFile(filepath.Join(eBookConverter.OutputPath, "output", "book.epub"), epubpath); err != nil {
-		beego.Error("复制文档失败 -> ", filepath.Join(eBookConverter.OutputPath, "output", "book.epub"), err)
-	}
-	if err := filetil.CopyFile(filepath.Join(eBookConverter.OutputPath, "output", "book.docx"), docxpath); err != nil {
-		beego.Error("复制文档失败 -> ", filepath.Join(eBookConverter.OutputPath, "output", "book.docx"), err)
-	}
 
 	convertBookResult.MobiPath = mobipath
 	convertBookResult.PDFPath = pdfpath

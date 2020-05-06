@@ -469,16 +469,7 @@ func (m *Member) Delete(oldId int, newId int) error {
 		o.Rollback()
 		return err
 	}
-	_, err = o.Raw("UPDATE md_document_history SET member_id=? WHERE member_id = ?", newId, oldId).Exec()
-	if err != nil {
-		o.Rollback()
-		return err
-	}
-	_, err = o.Raw("UPDATE md_document_history SET modify_at=? WHERE modify_at = ?", newId, oldId).Exec()
-	if err != nil {
-		o.Rollback()
-		return err
-	}
+
 	_, err = o.Raw("UPDATE md_documents SET member_id = ? WHERE member_id = ?;", newId, oldId).Exec()
 	if err != nil {
 		o.Rollback()
